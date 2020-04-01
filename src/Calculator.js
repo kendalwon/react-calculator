@@ -39,10 +39,12 @@ class Calculator extends React.Component {
   }
 
   handleKey(e) {
-    const input = String.fromCharCode(e.keyCode);
-    this.setState(prevState => ({
-      temp: `${prevState.temp}${input}`
-    }));
+    if (e.keyCode > 47 && e.keyCode < 58) {
+      const input = String.fromCharCode(e.keyCode);
+      this.setState(prevState => ({
+        temp: `${prevState.temp}${input}`
+      }));
+    } 
   }
 
   handleDigitClick(e) {
