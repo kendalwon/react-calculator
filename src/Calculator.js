@@ -11,12 +11,17 @@ class Calculator extends React.Component {
       input2: null,
       result: null
     }
+    this.handleKey = this.handleKey.bind(this);
     this.handleDigitClick = this.handleDigitClick.bind(this);
     this.handleOperationClick = this.handleOperationClick.bind(this);
     this.handleEqualsClick = this.handleEqualsClick.bind(this);
     this.performOperation = this.performOperation.bind(this);
     this.clear = this.clear.bind(this);
     this.renderScreen = this.renderScreen.bind(this);
+  }
+
+  componentWillMount() {
+    document.addEventListener('keydown', this.handleKey);
   }
 
   componentDidUpdate(_prevProps, prevState) {
@@ -27,6 +32,17 @@ class Calculator extends React.Component {
     if (this.state.input2 !== prevState.input2) {
       this.performOperation();
     }
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keypress', this.handleKey);
+  }
+
+  handleKey(e) {
+    const input = String.fromCharCode(e.keyCode);
+    this.setState(prevState => ({
+      temp: `${prevState.temp}${input}`
+    }));
   }
 
   handleDigitClick(e) {
