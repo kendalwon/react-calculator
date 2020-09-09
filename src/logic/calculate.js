@@ -2,46 +2,51 @@ import Big from "big.js";
 import operate from "./operate";
 import isNumber from "./isNumber";
 
-/**
- * Given a button name and a calculator data object, return an updated
- * calculator data object.
- *
- * Calculator data object contains:
- *   total:String      the running total
- *   next:String       the next number to be operated on with the total
- *   operation:String  +, -, etc.
- */
 export default function calculate(obj, buttonName) {
   if (buttonName === "AC") {
     return {
       total: null,
       next: null,
       operation: null,
+      lastPressed: null,
+      sign: null
     };
   }
 
   if (isNumber(buttonName)) {
     if (buttonName === "0" && obj.next === "0") {
-      return {};
+      return { lastPressed: buttonName };
     }
-    // If there is an operation, update next
+    if (obj.sign === "neg") {
+      return { 
+        next: `-${buttonName}`,
+        lastPressed: buttonName 
+      }
+    }
     if (obj.operation) {
       if (obj.next) {
-        return { next: obj.next + buttonName };
+        return { 
+          next: obj.next + buttonName,
+          lastPressed: buttonName  
+        };
       }
-      return { next: buttonName };
+      return { 
+        next: buttonName,
+        lastPressed: buttonName  
+      };
     }
-    // If there is no operation, update next and clear the value
     if (obj.next) {
       const next = obj.next === "0" ? buttonName : obj.next + buttonName;
       return {
         next,
         total: null,
+        lastPressed: buttonName 
       };
     }
     return {
       next: buttonName,
       total: null,
+      lastPressed: buttonName 
     };
   }
 
@@ -54,6 +59,7 @@ export default function calculate(obj, buttonName) {
           .toString(),
         next: null,
         operation: null,
+        lastPressed: buttonName 
       };
     }
     if (obj.next) {
@@ -63,18 +69,23 @@ export default function calculate(obj, buttonName) {
           .toString(),
       };
     }
-    return {};
+    return { lastPressed: buttonName };
   }
 
   if (buttonName === ".") {
     if (obj.next) {
-      // ignore a . if the next number already has one
       if (obj.next.includes(".")) {
-        return {};
+        return { lastPressed: buttonName };
       }
-      return { next: obj.next + "." };
+      return { 
+        next: obj.next + ".",
+        lastPressed: buttonName 
+      };
     }
-    return { next: "0." };
+    return { 
+      next: "0.",
+      lastPressed: buttonName 
+    };
   }
 
   if (buttonName === "=") {
@@ -83,51 +94,65 @@ export default function calculate(obj, buttonName) {
         total: operate(obj.total, obj.next, obj.operation),
         next: null,
         operation: null,
+        lastPressed: buttonName
       };
     } else {
-      // '=' with no operation, nothing to do
-      return {};
+      return { lastPressed: buttonName };
     }
   }
 
   if (buttonName === "+/-") {
     if (obj.next) {
-      return { next: (-1 * parseFloat(obj.next)).toString() };
+      return { 
+        next: (-1 * parseFloat(obj.next)).toString(),
+        lastPressed: buttonName 
+      };
     }
     if (obj.total) {
-      return { total: (-1 * parseFloat(obj.total)).toString() };
+      return { 
+        total: (-1 * parseFloat(obj.total)).toString(),
+        lastPressed: buttonName 
+      };
     }
-    return {};
+    return { lastPressed: buttonName };
   }
 
-  // Button must be an operation
-
-  // When the user presses an operation button without having entered
-  // a number first, do nothing.
-  // if (!obj.next && !obj.total) {
-  //   return {};
-  // }
-
-  // User pressed an operation button and there is an existing operation
-  if (obj.operation) {
-    return {
+  if (buttonName === "+" || buttonName === "-" || buttonName === "x" || buttonName === "÷") {
+    if (buttonName === "-" && (obj.lastPressed === "+" || obj.lastPressed === "-" || obj.lastPressed === "x" || obj.lastPressed === "÷" )) {
+      return {
+        total: obj.total,
+        next: null,
+        operation: obj.operation,
+        sign: 'neg',
+        lastPressed: buttonName
+      }
+    }
+    if (buttonName !== "-" && (obj.lastPressed === "+" || obj.lastPressed === "-" || obj.lastPressed === "x" || obj.lastPressed === "÷" )) {
+      return {
+        total: obj.total,
+        next: null,
+        operation: buttonName,
+        sign: null,
+        lastPressed: buttonName
+      }
+    }
+    if (!obj.next) {
+      return { 
+        operation: buttonName, 
+        lastPressed: buttonName
+      };
+    }
+    if (obj.operation) return {
       total: operate(obj.total, obj.next, obj.operation),
       next: null,
       operation: buttonName,
+      lastPressed: buttonName
+    }
+    else return {
+      total: obj.next,
+      next: null,
+      operation: buttonName,
+      lastPressed: buttonName
     };
   }
-
-  // no operation yet, but the user typed one
-
-  // The user hasn't typed a number yet, just save the operation
-  if (!obj.next) {
-    return { operation: buttonName };
-  }
-
-  // save the operation and shift 'next' into 'total'
-  return {
-    total: obj.next,
-    next: null,
-    operation: buttonName,
-  };
 }
